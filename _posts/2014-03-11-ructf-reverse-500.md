@@ -16,7 +16,7 @@ root@kali:~/vmshare/ctf/reverse/original# file arcfour.exe
 arcfour.exe: PE32 executable (console) Intel 80386, for MS Windows, UPX сompressed
 {% endhighlight %}
 
-Well, simple enough! Just unpack it with "upx -d" and load into IDA :
+Well, simple enough! Just unpack it with `upx -d` and load into IDA :
 
 
 {% highlight c %}
@@ -46,13 +46,13 @@ int __cdecl main(int argc, const char **argv, const char **envp)
 }
 {% endhighlight %}
 
-lsString1 is easy to find as it's hardcoded – "oh_nasty_boy!you_hacked_me:(hehe". Pass it as an argument and we get:
+lsString1 is easy to find as it's hardcoded – `oh_nasty_boy!you_hacked_me:(hehe`. Pass it as an argument and we get:
 
 {% highlight text %}
 good job, put flag into system
 {% endhighlight %}
 
-Strange as it is obviously not the correct flag because we know that the valid one starts with "RUCTF_". At this point I was a bit confused by the fact that "main" function was quite simple and didn't have any obvious jumps or calls. But looking further down the dissasemly I found quite interesting snippet of code that didn’t have any references (or so I though at the moment):
+Strange as it is obviously not the correct flag because we know that the valid one starts with `RUCTF_`. At this point I was a bit confused by the fact that `main` function was quite simple and didn't have any obvious jumps or calls. But looking further down the dissasemly I found quite interesting snippet of code that didn’t have any references (or so I though at the moment):
 
 {% highlight text %}
 sub_4010D0:
@@ -104,7 +104,7 @@ sub_4010D0:
 .text:00401193                 mov     [ebp+var_8], esp
 {% endhighlight %}
 
-After spending quite some time with unpacked binary I finally decided to give it a try and run the original. Now the hardcoded string doesn't seem to be valid! Sow now it was obvious that there’s something not quite right with the upx unpacking stub. Peeking at the original binary in IDA we see two functions: start and TlsCallback_0. "start" is not really insteresting as it’s pretty much unmodified upx unpacker but TlsCallback_0 is, on the other hand, the one where all the difference is. Tlscallback functions are used with thread programming to initialize data. The interesting thing about them is that these function are executed by windows pe loader before the program's entry point. So if you want to break on a tlscallback function you have to setup your debugger to pause before the default entry point. More info can be found here – <https://isc.sans.edu/diary/How+Malware+Defends+Itself+Using+TLS+Callback+Functions/6655>.
+After spending quite some time with unpacked binary I finally decided to give it a try and run the original. Now the hardcoded string doesn't seem to be valid! Sow now it was obvious that there’s something not quite right with the upx unpacking stub. Peeking at the original binary in IDA we see two functions: start and TlsCallback_0. `start` is not really insteresting as it’s pretty much unmodified upx unpacker but TlsCallback_0 is, on the other hand, the one where all the difference is. Tlscallback functions are used with thread programming to initialize data. The interesting thing about them is that these function are executed by windows pe loader before the program's entry point. So if you want to break on a tlscallback function you have to setup your debugger to pause before the default entry point. More info can be found here – <https://isc.sans.edu/diary/How+Malware+Defends+Itself+Using+TLS+Callback+Functions/6655>.
 
 {% highlight text %}
 TlsCallback_0:
@@ -126,7 +126,7 @@ UPX1:00406D23                 retn
 UPX1:00406D23 TlsCallback_0   endp
 {% endhighlight %}
 
-Running original binary leads to unhandled exception caused by invalid opcodes just before string comparison. These invalid bytes are inserted with tlscallback. Skipping tlscallback with a jump over memory editing instructions leads to correct program execution but again treats the hardcoded string "oh_nasty_boy!you_hacked_me:(hehe" as valid. Looking closer at main’s prologue we see a pointer being pushed onto stack:
+Running original binary leads to unhandled exception caused by invalid opcodes just before string comparison. These invalid bytes are inserted with tlscallback. Skipping tlscallback with a jump over memory editing instructions leads to correct program execution but again treats the hardcoded string `oh_nasty_boy!you_hacked_me:(hehe` as valid. Looking closer at main’s prologue we see a pointer being pushed onto stack:
 
 {% highlight text %}
 00401220   55               PUSH EBP
@@ -136,7 +136,7 @@ Running original binary leads to unhandled exception caused by invalid opcodes j
 0040122A   68 241B4000      PUSH arcfour.00401B24   ; JMP to MSVCR90._except_handler3
 {% endhighlight %}
 
-This address references a list of exception handlers located at 0x004012AC and 0x004012C5 . So now with breakpoints on both handlers we pass exception to program. Tracing down sub_4010D0 we observe an ascii string "Oh,NiC3_k3Y" generating on stack. Code generation:
+This address references a list of exception handlers located at 0x004012AC and 0x004012C5 . So now with breakpoints on both handlers we pass exception to program. Tracing down sub_4010D0 we observe an ascii string `Oh,NiC3_k3Y` generating on stack. Code generation:
 
 {% highlight text %}
 .text:004011C3 loc_4011C3:                             
@@ -146,4 +146,4 @@ This address references a list of exception handlers located at 0x004012AC and 0
 .text:004011CB                 jb      short loc_4011C3
 {% endhighlight %}
 
-Task's name infers that rc4 stream cipher is used so we might assume that “Oh,NiC3_k3Y” is the corresponding encryption/decryption key. This key is used in sub_401000 to modify argument that is passed to program. Further down the code the modified argument string is compared with a seemingly random buffer in memory. Since encryption/decryption is identical I passed "random" buffer's address to sub_401000, which successfully decrypted the buffer which turn out to be a valid flag.
+Task's name infers that rc4 stream cipher is used so we might assume that `Oh,NiC3_k3Y` is the corresponding encryption/decryption key. This key is used in sub_401000 to modify argument that is passed to program. Further down the code the modified argument string is compared with a seemingly random buffer in memory. Since encryption/decryption is identical I passed "random" buffer's address to sub_401000, which successfully decrypted the buffer which turn out to be a valid flag.

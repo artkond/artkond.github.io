@@ -17,7 +17,7 @@ title: '#!/bin/bash'
 author: Artem Kondratenko
 description: Security notes 
 baseurl: "" # the subpath of your site, e.g. /blog
-url: "https://artkond.github.io" # the base hostname & protocol for your site, e.g. http://example.com
+url: "https://artkond.com" # the base hostname & protocol for your site, e.g. http://example.com
 repository: artkond/artkond.github.io
 lang: en
 timezone: UTC
