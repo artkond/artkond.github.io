@@ -15,7 +15,7 @@
 # in the templates via {{ site.myvariable }}.
 title: '#!/bin/bash'
 author: Artem Kondratenko
-description: Security notes 
+description: Security Notes 
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://artkond.com" # the base hostname & protocol for your site, e.g. http://example.com
 repository: artkond/artkond.github.io
@@ -37,7 +37,7 @@ twitter_username: artkond
 twitter_image:
 facebook_app_id:
 facebook_image:
-google_analytics:
+google_analytics: UA-93774424-1
 
 # Plugins
 gems:
