@@ -33,10 +33,19 @@ exclude:
   - vendor
 
 # Social media
-twitter_username: artkond
-twitter_image:
-facebook_app_id:
-facebook_image:
+
+social:
+  name: Artem Kondratenko
+  links:
+    - https://twitter.com/artkond
+
+twitter:
+  username: artkond
+
+#twitter_username: artkond
+#twitter_image:
+#facebook_app_id:
+#facebook_image:
 google_analytics: UA-93774424-1
 
 # Plugins
@@ -44,6 +53,7 @@ gems:
   - jekyll-archives
   - jekyll-paginate
   - jekyll-sitemap
+  - jekyll-seo-tag
 
 # Build settings
 markdown: kramdown
@@ -56,7 +66,7 @@ paginate: 5
 
 # Markdown settings
 kramdown:
-  auto_ids: false
+  auto_ids: true
   enable_coderay: false
   entity_output: as_char
   footnote_nr: 1

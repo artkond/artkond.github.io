@@ -33,6 +33,7 @@ Wrong!
 So no easy flag today ;) Ok, no problem, fire up IDA + linux_server and let's roll. sub_80484C0 is our main function:
 
 ![ida]({{ site.url }}/assets/plaidctf1.jpg)
+<!-- more -->
 
 First branch we encounter checks the input flag for correct length which should be 30 (including \n). If the length is correct we can step further down until we stop at 0x08048597 `call dword ptr [esi+8]`, which is dynamically resolved so its easier to see in debugging session:
 

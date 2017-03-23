@@ -18,7 +18,6 @@ arcfour.exe: PE32 executable (console) Intel 80386, for MS Windows, UPX сompres
 
 Well, simple enough! Just unpack it with `upx -d` and load into IDA :
 
-
 {% highlight c %}
 int __cdecl main(int argc, const char **argv, const char **envp)
 {
@@ -45,6 +44,7 @@ int __cdecl main(int argc, const char **argv, const char **envp)
         return result;
 }
 {% endhighlight %}
+<!-- more -->
 
 lsString1 is easy to find as it's hardcoded – `oh_nasty_boy!you_hacked_me:(hehe`. Pass it as an argument and we get:
 

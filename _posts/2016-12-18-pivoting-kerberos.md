@@ -15,6 +15,7 @@ Here's a detailed walkthough on how to use golden tickets on Kali Linux.
 Let's start with obtaining krbtgt ntlm hash. I use an encoded version of mimikatz utility that gets me krbtgt hash without alerting AV (<https://github.com/artkond/bat-armor/blob/master/examples/krbtgt.bat>):
 
 ![Dcsync]({{ site.url }}/assets/golden1.png)
+<!-- more -->
 
 Stripping last number from krbtgt SID (in out case 502) we obtain domain SID S-1-5-21-3251500307-1840725093-2229733580.
 Now to generate the ticket we use ticketer.py utility from Impacket (<https://github.com/CoreSecurity/impacket/blob/master/examples/ticketer.py>):
