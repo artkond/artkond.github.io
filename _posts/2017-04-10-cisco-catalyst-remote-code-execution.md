@@ -5,14 +5,14 @@ title: "CVE-2017-3881 Cisco Catalyst RCE Proof-Of-Concept"
 description: "Digging deep into CIA Vault 7 documents to craft Proof-Of-Concept remote code execution for Cisco Catalyst switches"
 ---
 
-Do you still have telnet enabled on your Catalyst switches? Think twice, here's a proof-of-concept remote code execution exploit for Catalyst 2960 switch with latest suggested firmware. Check out the exploit code [here](https://github.com/artkond/cisco-rce/). What follows is a detailed write-up of the exploit development process for the vulnerability leaked from CIA's archive on March 7th 2017 and publicly disclosed by Cisco Systems on March 17th 2017. At the time of writing this post there is no patch available. Nonetheless there is a remidiation - disable telnet and use SSH instead.
+Do you still have telnet enabled on your Catalyst switches? Think twice, here's a proof-of-concept remote code execution exploit for Catalyst 2960 switch with latest suggested firmware. Check out the exploit code [here](https://github.com/artkond/cisco-rce/). What follows is a detailed write-up of the exploit development process for the vulnerability leaked from CIA's archive on March 7th 2017 and publicly disclosed by Cisco Systems on March 17th 2017. At the time of writing this post there is no patch available. Nonetheless there is a remediation - disable telnet and use SSH instead.
 <!-- more -->
 
 ## Vault 7 CIA leak
 
 A series of CIA's documents were leaked on March 7th 2017 and [published](https://wikileaks.org/ciav7p1/) on WikiLeaks. Among other publications there was an interesting preauth code execution vulnerability that affected multiple Cisco switches. This vulnerability is code-named [ROCEM](https://wikileaks.org/ciav7p1/cms/page_20250772.html) in the leaked documents. Although very few technical details were mentioned, few things stand out.
 
-The Vault 7's documents shed a light on the testing process for the actual exploit. No exploit source code is available in the leak. Two use cases are highlighted there - the tool can be launched in either interactive mode or set mode. The interactive mode sends the payload via telnet and immeditely presents the attacker with command shell in the context of the same telnet connection. Quote from the [doc](https://wikileaks.org/ciav7p1/cms/page_23134373.html):
+The Vault 7's documents shed a light on the testing process for the actual exploit. No exploit source code is available in the leak. Two use cases are highlighted there - the tool can be launched in either interactive mode or set mode. The interactive mode sends the payload via telnet and immediately presents the attacker with command shell in the context of the same telnet connection. Quote from the [doc](https://wikileaks.org/ciav7p1/cms/page_23134373.html):
 
 ```
 Started ROCEM interactive session - successful:
@@ -116,11 +116,11 @@ One piece of information being useful for me in researching this vulnerability w
     000482: Jun 3 13:54:09.623: Telnet2: recv SB 36 0 ^CCISCO_KITS^Ap
 ```
 
-Note the `CISCO_KITS` option received by the service on the last line. This prooved to be an important string.
+Note the `CISCO_KITS` option received by the service on the last line. This proved to be an important string.
 
 ## Cisco advisory
 
-On March 17th 2017 Cisco Systems [disclosed](https://tools.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-20170317-cmp) a vulnerability present in their switches. This diclosure was based on the documents from Vault 7:
+On March 17th 2017 Cisco Systems [disclosed](https://tools.cisco.com/security/center/content/CiscoSecurityAdvisory/cisco-sa-20170317-cmp) a vulnerability present in their switches. This disclosure was based on the documents from Vault 7:
 
 > A vulnerability in the Cisco Cluster Management Protocol (CMP) processing code in Cisco IOS and Cisco IOS XE Software could allow an unauthenticated, remote attacker to cause a reload of an affected device or remotely execute code with elevated privileges.
 
@@ -134,7 +134,7 @@ Long story short, the vulnerability allows the attacker to exploit telnet servic
 
 ## Switch clustering
 
-All right! I had two Catalyst 2960 switches for researching this vulnerability. Clustering sets a master-slave relation between switches. Master switch is able to get a privileged command shell on the slave. As Cisco mentioned in its adivisory, telnet is used as a command protocol between cluster members. Some info on clustering can be found [here](http://www.cisco.com/c/en/us/td/docs/switches/lan/catalyst3750x_3560x/software/release/12-2_55_se/configuration/guide/3750xscg/swclus.pdf) and [here's](https://slaptijack.com/networking/cisco-catalyst-configuration-using-cluster-commands/) an example of setting up a cluster environment.
+All right! I had two Catalyst 2960 switches for researching this vulnerability. Clustering sets a master-slave relation between switches. Master switch is able to get a privileged command shell on the slave. As Cisco mentioned in its advisory, telnet is used as a command protocol between cluster members. Some info on clustering can be found [here](http://www.cisco.com/c/en/us/td/docs/switches/lan/catalyst3750x_3560x/software/release/12-2_55_se/configuration/guide/3750xscg/swclus.pdf) and [here's](https://slaptijack.com/networking/cisco-catalyst-configuration-using-cluster-commands/) an example of setting up a cluster environment.
 
 Now to look for cluster traffic between them. The following should be in the master switch config:
 
@@ -168,7 +168,7 @@ catalyst2>show version
 Cisco IOS Software, C2960 Software (C2960-LANBASEK9-M), Version 12.2(55)SE1, RELEASE SOFTWARE (fc1)
 ```
 
-Aha! Telnet traffic is actualy being incapsulated into layer 2 LLC packet. If we look close enough we will notice IP packets inside with chopped MAC addresses at source and destination fields. Inside those "IP" packets reside valid TCP frames with a telnet session.
+Aha! Telnet traffic is actually being encapsulated into layer 2 LLC packet. If we look close enough we will notice IP packets inside with chopped MAC addresses at source and destination fields. Inside those "IP" packets reside valid TCP frames with a telnet session.
 
 ![show version in cluster traffic]({{ site.url }}/assets/cisco/show_ver_cluster.png)
 
@@ -202,7 +202,7 @@ DECIMAL       HEXADECIMAL     DESCRIPTION
 112           0x70            bzip2 compressed data, block size = 900k
 ```
 
-In order to facilitate static analisys of the resulting binary we better know the firmware load offset. This offset is printed to serial console during boot process:
+In order to facilitate static analysis of the resulting binary we better know the firmware load offset. This offset is printed to serial console during boot process:
 
 ```
 Loading "flash:c2960-lanbasek9-mz.122-55.SE1.bin"...@@@@@@@@@@@@@@@@@@@@@@
@@ -217,7 +217,7 @@ Fire up IDA and let's roll. CPU architecture is PowerPC 32-bit BigEndian. Load t
 
 ### Discovering strings
 
-Remember the `CISCO_KITS` string in the cluser traffic I captured before? This was my starting point. After discovering most of the functions in IDA, I was able to see the cross-refrences to the strings located at the end of firmware. 
+Remember the `CISCO_KITS` string in the cluster traffic I captured before? This was my starting point. After discovering most of the functions in IDA, I was able to see the cross-refrences to the strings located at the end of firmware. 
 
 ![ida cisco kits string]({{ site.url }}/assets/cisco/ida_cisco_kits.png)
 
@@ -281,7 +281,7 @@ Getting control of the instruction pointer was easy as it was overwritten with t
 
 ### ROPing a way out
 
-Since there wasn't a way to execute code on the stack I had to use it as a data buffer and reuse existing code in the firmware. The idea is to chain function epilogs in a meaningful way to perform arbitary memory writes. But wait, write what? Take a look at the decompiled function at `0x00F47A34`:
+Since there wasn't a way to execute code on the stack I had to use it as a data buffer and reuse existing code in the firmware. The idea is to chain function epilogs in a meaningful way to perform arbitrary memory writes. But wait, write what? Take a look at the decompiled function at `0x00F47A34`:
 
 ```c
 if ( ptr_is_cluster_mode(tty_struct_var->telnet_struct_field) )
@@ -380,7 +380,7 @@ This epilog makes the final write and returns to the legitimate execution flow. 
 
 At the end of the day I ended up with a tool with the ability to patch function pointers responsible for credless connection and privilege level. Note that the exploit  code is heavily dependent on the exact firmware version used on the switch. Using exploit code for some different firmware most probably will crash the device.
 
-I used the knowledge from static and dynamic analisys of an older firmware SE1 to build an exploit for the latest suggested firmware 12.2(55)SE11. All the difference between firmware versions is different functions and pointers offsets. Also, the way the exploit works makes it easy to revert the changes back. Example:
+I used the knowledge from static and dynamic analysis of an older firmware SE1 to build an exploit for the latest suggested firmware 12.2(55)SE11. All the difference between firmware versions is different functions and pointers offsets. Also, the way the exploit works makes it easy to revert the changes back. Example:
 
 ```
 $ python c2960-lanbasek9-m-12.2.55.se11.py 192.168.88.10 --set
@@ -437,4 +437,4 @@ Password:
 
 ```
 
-This RCE POC is available [here](https://github.com/artkond/cisco-rce/) for both firware versions. DoS version of this exploit is [available](https://github.com/artkond/cisco-rce/blob/master/ios_telnet_rocem.rb) as a metasploit module, it might work for most models mentioned in the Cisco advisory.
+This RCE POC is available [here](https://github.com/artkond/cisco-rce/) for both firmware versions. DoS version of this exploit is [available](https://github.com/artkond/cisco-rce/blob/master/ios_telnet_rocem.rb) as a metasploit module, it might work for most models mentioned in the Cisco advisory.
