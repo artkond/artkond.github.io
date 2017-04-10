@@ -374,7 +374,7 @@ Previous two gadgets load a pointer of `get_privilege_level` function into `r3`,
     blr
 ```
 
-This epilog makes the final write and returns to the legitimate execution flow. Of course, stack frame should be formed accordingly to make this rop chain work. Check out the exploit [source](https://github.com) to see the actual stack layout for this chain to work as intended.
+This epilog makes the final write and returns to the legitimate execution flow. Of course, stack frame should be formed accordingly to make this rop chain work. Check out the exploit [source](https://github.com/artkond/cisco-rce/blob/master/c2960-lanbasek9-m-12.2.55.se1.py) to see the actual stack layout for this chain to work as intended.
 
 ### Running the exploit
 
@@ -437,4 +437,4 @@ Password:
 
 ```
 
-This RCE POC is available [here](https://github.com/artkond/cisco-rce/) for both firware versions. DoS version of this exploit is [available](https://github.com/artkond/cisco-rce/ios_telnet_rocem.rb) as a metasploit module, it might work for most models mentioned in the Cisco advisory.
+This RCE POC is available [here](https://github.com/artkond/cisco-rce/) for both firware versions. DoS version of this exploit is [available](https://github.com/artkond/cisco-rce/blob/master/ios_telnet_rocem.rb) as a metasploit module, it might work for most models mentioned in the Cisco advisory.
